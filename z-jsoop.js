@@ -1,20 +1,41 @@
 /**
- * Zazzi jSoop
+ * Zazzi jSoop 1.0.1
+ * Zazzi JavaScript Oriented Object Programming
  *
  * Esta é uma bibliota que cria um ambiente javascript de orientação objeto
- * equivalente ao dos frameworks da sencha.
+ * equivalente ao dos frameworks da sencha (mas é open \o/).
  *
  * Esta biblioteca não conta com nenhuma classe, apenas com o estilo de
  * orientação objeto do Ext, então recursos como o Controller, Component,
  * Model e Store só estarão inclusos se você criá-los em sua aplicação, ou
  * então fazer a cópia da classe caso alguém o tenha feito.
  *
- * Por que utilizar este e não o da Sencha? O Sencha é pago, este é open, a 
- * verdade é que só criei isso para uso pessoal...
+ *	Vantagens:
+ * 		* É open source e pode ser usado em seus freelas e projetos de empresa
+ * 		(o sencha é pago e caro)
  *
- * Desvantagens:
- * 	Você não conta com um compressor de javascript aqui, como Sencha CMD.
- * 	Você vai carregar cada um dos arquivos da classe para instanciar sua app.
+ * 		* Como é equivalente a orientação objeto definida no Ext Js, se você
+ * 		já usa este framework, já sabe usar Z jSoop, ou se já conhece Z jSoop,
+ * 		vai ter mais facilidade de entender Ext Js
+ * 
+ *		* Você pode usar a documentação automatica do JSDuck, já que segue
+ *		o mesmo padrão que o sencha
+ *
+ * 		* Você pode usar alguns componentes sencha que já tenha criado, por
+ * 		que o modelo de orientação objeto é equivalente
+ * 
+ *	Desvantagens:
+ * 		* Você não conta com um compressor de javascript aqui, como Sencha CMD.
+ * 		
+ * 	 	* Você vai carregar cada um dos arquivos da classe para instanciar sua app,
+ * 	 	então não use para web app
+ *
+ * 	Proposito:
+ * 		* Esta biblioteca foi construida com o objetivo de se criar apps para android,
+ * 		ios, windows compilando o javascript com phonegap, conseguindo manter uma orientação
+ * 		objetos descente, como é feito no Ext Js.
+ * 		* A biblioteca não dá suporta para o uso de OOP em ambiente de node, mas a ideia é que
+ * 		isso seja implementado (quando eu precisar)
  *
  * O objetivo inicial da reprodução deste estilo de OOP para javascript é o
  * uso deste em um app mobile, usando PhoneGap, acredito que com o javascript

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+
+		<title>Teste</title>
+		<script type="text/javascript" src="z-jsoop.js"></script>
+		<script>
+			window.onload = function(){
+				/**
+				 * Biblioteca de testes
+				 */
+				var is = function(mock, valorDesejado, mensagem){
+					if (mock === valorDesejado) {
+						setCorreto(mensagem);
+					} else {
+						setErro(mensagem);
+					}
+				};
+
+				var setErro = function(mensagem){
+					var div = document.createElement('div');
+					div.setAttribute("class", "nao-passou");
+					div.textContent = mensagem;
+
+					var body = document.body;
+					body.appendChild(div);
+				};
+
+				var setCorreto = function(mensagem){
+					var div = document.createElement('div');
+					div.setAttribute("class", "passou");
+					div.textContent = mensagem;
+
+					var body = document.body;
+					body.appendChild(div);
+				};
+
+				var err;
+
+				/**
+				 * Testes simples
+				 */
+				try {
+					Z.define('Teste1', {
+						config: {
+							atributo: 10
+						},
+
+						constructor: function(){
+							this.valor = 10;
+						}
+					});
+				} catch (e) {
+					setErro("Não foi possível criar uma classe que sobrescreve o contructor e tem um config.");
+				}
+
+				is((new Teste1).valor, 10, "Construtor da classe deve ser executado na instância");
+				is((new Teste1).getAtributo(), undefined, "Constructor sobrescrito não deve chamar initConfig");
+
+				err = 'Não pode declarar duas vezes a mesma classe';
+				try {
+					Z.define('Teste1');
+					setErro(err);
+				} catch (e) {
+					setCorreto(err);
+				}
+
+				/**
+				 * Testes com herança
+				 */
+				try {
+					Z.define('Pai', {
+						config: {
+							atributo: 10
+						},
+
+						constructor: function(){
+							this.callParent(arguments);
+						},
+
+						getPaçoca: function(){
+							return "amobeico";
+						},
+
+						getPresunto: function(){
+							return "toma um presunto";
+						},
+
+						amoBeico: function(){
+							return "e paçoca";
+						}
+					});
+				} catch (e) {
+					setErro("Não foi possível criar uma classe com metodos simples");
+				}
+
+				var pai = new(Pai);
+				is(pai.getAtributo(), 10, "callParent deve chamar o constructor do objeto base quando não se trata de uma extenção");
+
+				pai.setAtributo(5);
+				is(pai.getAtributo(), 5, "Setar atributos.");
+
+				pai.applyAtributo = function(v){
+					return String(v);
+				};
+
+				pai.setAtributo(5);
+				is(pai.getAtributo(), '5', "Ajuste de dados por apply funcionando.");
+
+				try {
+					Z.define('Filho', {
+						extend: 'Pai',
+
+						config: {
+							carro: 'Fusca'
+						},
+
+						getPaçoca: function(){
+							return "ovu";
+						},
+
+						amoBeico: function(){
+							return this.callParent(arguments);
+						}
+					});
+				} catch (e) {
+					setErro('Extender de pai que tenha o constructor sobrescrito');
+				}
+
+				var filho = new Filho;
+				is(filho.amoBeico(), 'e paçoca', "Sobrescrever o método e chamar dentro dele o método sobrescrito.");
+				is(filho.getPresunto(), 'toma um presunto', 'Executando método herdado.');
+				is(filho.getPaçoca(), 'ovu', "Polimorfismo.");
+				is(filho.getCarro(), 'Fusca', 'Filho gerando metodos automaticos do config');
+				is(filho.getAtributo(), 10, 'Usando os metodos gerados automaticamente no pai');
+
+				try {
+					Z.define('Neto', {
+						extend: 'Filho',
+
+						amoBeico: function(){
+							return this.callParent(arguments);
+						}
+					});
+				} catch (e) {
+					setErro(e.stack);
+				}
+
+				var neto = new Neto;
+				is(neto.amoBeico(), 'e paçoca', 'Terceiro nível de herança chamando o metodo avô com callParent');
+
+				try {
+					Z.define('Irmao', {
+						mixin: {
+							'mano': 'Filho'
+						},
+
+						amoBeico: function(){
+							return this.mixins.mano.amoBeico();
+						},
+
+						getPaçoca: function(){
+							return 'batata';
+						}
+					});
+				} catch (e) {
+					setErro('Criando classe com mixin');
+				}
+
+				var irmao = new Irmao();
+				is(irmao.getPresunto(), 'toma um presunto', 'Chamando método do irmão');
+				is(irmao.amoBeico(), 'e paçoca', 'Delegando para o metodo do mixin');
+				is(irmao.getPaçoca(), 'batata', 'Sobrescrevendo o método do mixin');
+			};
+		</script>
+
+		<style>
+			body {
+				font-family: arial;	
+				margin: 0px;
+			}
+
+			.nao-passou, .passou {
+				margin: 5px;
+				padding: 5px;
+				border-radius: 3px;
+			}
+
+			.passou {
+				background-color: #A3FFA9;
+				color: #1B8F2B;
+				border: 1px solid #4C9E51;
+			}
+
+			.nao-passou {
+				background-color: #FFCFCF;
+				color: #A64444;
+				border: 1px solid #A64444;
+			}
+		</style>
+	</head>
+	<body>
+	</body>
+</html>

@@ -1,5 +1,5 @@
 /**
- * Zazzi jSoop 1.0.1
+ * Zazzi jSoop 1.0.2
  * Zazzi JavaScript Oriented Object Programming
  *
  * Esta é uma bibliota que cria um ambiente javascript de orientação objeto
@@ -127,7 +127,6 @@ Z.declare = function(className){
 	//	criando a classe
 	var classe = function(config, isExtending){
 		if (!isExtending) {
-			this.initConfig(config);
 			this.constructor();
 		}
 	};
@@ -271,11 +270,13 @@ Z.declare = function(className){
 		 * Acopla a classe alguns métodos que todas devem ter
 		 */
 		var setarPadroesDaClasse = function(){
+			var constructBase = function constructor(config){ this.initConfig(config); };
+
 			classe.prototype.mixin			= {};
-			adicionarMetodo('constructor', function constructor(){});
+			adicionarMetodo('constructor', constructBase);
 			adicionarMetodo('callParent', callParent);
 			adicionarMetodo('initConfig', initConfig);
-			adicionarMetodo('getParent', function(){ return {}; });
+			adicionarMetodo('getParent', function(){ return { constructor: constructBase }; });
 
 			classe.getDefinitions			= function(){ return definitions; };
 		};
@@ -342,8 +343,9 @@ Z.declare = function(className){
 				throw "Argumento inválido para chamada de 'callParent', envie Array ou Arguments";
 			}
 
-			var parent = me.getParent();
-			var method = parent[caller.identification];
+			var owner	= new caller.owner({}, true);
+			var parent	= owner.getParent();
+			var method	= parent[caller.identification];
 
 			if (typeof method == 'function') {
 				return method.apply(me, params);			
@@ -415,15 +417,16 @@ Z.declare = function(className){
 		 * tratamentos devidos
 		 */
 		var adicionarMetodo = function(identification, call){
-			if (t instanceof Object && t.constructor !== Function) {
+			if (call instanceof Object && call.constructor !== Function) {
 				throw "{0}{1}{2}".format(
 						"Você não pode criar um propriedade que tenha um objeto por valor padrão,",
 						"isso fará com que todas as classes compartilhem da referência do mesmo.",
 						"Adicione o objeto manualmente sobrescrevendo o metodo constructor."
 					);
-			}
+			};
 
 			call.identification = identification;
+			call.owner = classe;
 			classe.prototype[identification] = call;
 		};
 
@@ -804,4 +807,8 @@ String.prototype.format = function(){
 	}
 
 	return txt;
+};
+
+Array.prototype.format = function(str){
+	return str.format.apply(this);
 };

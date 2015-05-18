@@ -122,12 +122,14 @@ Z.declare = function(className){
 		lastScope = scope;
 		scope = scope[name];
 	});
+
 	var lastName = names.pop();
 
 	//	criando a classe
-	var classe = function(config, isExtending){
-		if (!isExtending) {
-			this.constructor();
+	var classe = function Base(config, voidObject){
+		var me = this;
+		if (!voidObject) {
+			me.constructor(config);
 		}
 	};
 
@@ -177,6 +179,7 @@ Z.declare = function(className){
 			'extend', 'mixins', 'singleton', 'statics', 'requires', 'config'
 		];
 
+		//	este é o constructor da classe geradora de classes e não da classe gerada!!
 		/**
 		 * Executa cada um dos blocos para compor a classe, recebe
 		 * por parâmetro o nome da classe a ser criada e depois as
@@ -270,7 +273,9 @@ Z.declare = function(className){
 		 * Acopla a classe alguns métodos que todas devem ter
 		 */
 		var setarPadroesDaClasse = function(){
-			var constructBase = function constructor(config){ this.initConfig(config); };
+			var constructBase = function constructor(config){
+				this.initConfig(config);
+			};
 
 			classe.prototype.mixin			= {};
 			adicionarMetodo('constructor', constructBase);
@@ -278,6 +283,7 @@ Z.declare = function(className){
 			adicionarMetodo('initConfig', initConfig);
 			adicionarMetodo('getParent', function(){ return { constructor: constructBase }; });
 
+			//	metodo estatico que permite que outras classes leiam as configurações base desta
 			classe.getDefinitions			= function(){ return definitions; };
 		};
 
@@ -287,27 +293,28 @@ Z.declare = function(className){
 		 * foram chamadas
 		 */
 		var implementarDefinicoes = function(){
+			//	primeiro fazer a extenção, se houver uma
+			if (definitions.extend)
+				estender();
+
+			//	sobrescrevendo os metodos da extenção com os mixins
+			if (definitions.mixins) {
+				Z.each(definitions.mixins, function(mixinName, alias){
+					misturar(alias, mixinName);
+				});
+			}
+
+			//	vinculando a classe os métodos e atributos estáticos
 			if (definitions.statics)
 				setarMetodosEstaticos();
 
 			if (definitions.config)
 				setarConfigs();
 
-			if (definitions.extend)
-				estender();
-
-			//	aplicando os mixins primeiro para serem sobrescritos
-			//	pelos metodos da classe
 			Z.each(definitions, function(call, nome){
 				if (RESERVADOS.indexOf(nome) === -1)
 					adicionarMetodo(nome, call);
 			});
-
-			if (definitions.mixins) {
-				Z.each(definitions.mixins, function(mixinName, alias){
-					misturar(alias, mixinName);
-				});
-			}
 		};
 
 		/**
@@ -361,8 +368,6 @@ Z.declare = function(className){
 		 */
 		var initConfig = function(config){
 			var me = this;
-			var defaults = definitions.config;
-			config = Z.apply(defaults, config);
 
 			if (config && config.constructor === Object) {
 				Z.each(config, function(value, key){
@@ -451,12 +456,11 @@ Z.declare = function(className){
 			if (config.constructor === Object) {
 
 				Z.each(config, function(value, param){
-					var _get		= gerarNomeDoMetodo("get", param);
-						_set		= gerarNomeDoMetodo("set", param);
-						_apply		= gerarNomeDoMetodo("apply", param);
+					var _get		= gerarNomeDoMetodo("get", param),
+						_set		= gerarNomeDoMetodo("set", param),
+						_apply		= gerarNomeDoMetodo("apply", param),
 						_update		= gerarNomeDoMetodo("update", param);
 
-					var lastCreation;
 					var _param = "_{0}".format(param);
 
 					adicionarMetodo(_get, function(){
@@ -479,6 +483,8 @@ Z.declare = function(className){
 							this[_update](v, old);
 						}
 					});
+
+					classe.prototype[_param] = value;
 				});
 			}
 		};
@@ -499,7 +505,24 @@ Z.declare = function(className){
 
 				if (!classePai.singleton) {
 					//	instância o pai
-					var pai = new classePai({}, true);
+					var pai		= new classePai({}, true);
+
+					//	metodo estaticos do pai sendo replicados para o filho
+					var defPai	= classe.getDefinitions();
+					if (defPai.statics) {
+						//	primeiro crio um objeto vazio
+						var stc = {};
+
+						//	passo os metodos estaticos do pai para ele
+						Z.apply(stc, defPai.statics);
+
+						// depois sobrescrevo com os metodos do filho, caso ele
+						// tenha algum metodo com o mesmo nome
+						Z.apply(stc, definitions.statics);
+
+						//	depois sobrescrevo os metodos antigos do filho com essa fusão
+						definitions.statics = stc;
+					}
 
 					//	joga o pai no prototipo da classe
 					classe.prototype = new classePai({}, true);

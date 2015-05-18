@@ -56,7 +56,7 @@
 				}
 
 				is((new Teste1).valor, 10, "Construtor da classe deve ser executado na instância");
-				is((new Teste1).getAtributo(), undefined, "Constructor sobrescrito não deve chamar initConfig");
+				is((new Teste1({ atributo: 11 })).getAtributo(), 10, "Constructor sobrescrito não deve chamar initConfig");
 
 				err = 'Não pode declarar duas vezes a mesma classe';
 				try {
@@ -66,13 +66,12 @@
 					setCorreto(err);
 				}
 
-				/**
-				 * Testes com herança
-				 */
 				try {
 					Z.define('Pai', {
 						config: {
-							atributo: 10
+							atributo: 10,
+
+							fumiga: 'sim'
 						},
 
 						constructor: function(){
@@ -108,12 +107,21 @@
 				pai.setAtributo(5);
 				is(pai.getAtributo(), '5', "Ajuste de dados por apply funcionando.");
 
+				var pai = new Pai({ fumiga: 'naum' });
+				is(pai.getFumiga(), 'naum', 'Sobrescrevendo os valores defaults do config');
+				is(pai.getAtributo(), 10, 'Sobrescrição de um atributo não anula de um outro nada haver');
+
+				/**
+				 * Testes com herança
+				 */
 				try {
 					Z.define('Filho', {
 						extend: 'Pai',
 
 						config: {
-							carro: 'Fusca'
+							carro: 'Fusca',
+
+							etnia: 'Indiu'
 						},
 
 						getPaçoca: function(){
@@ -128,12 +136,14 @@
 					setErro('Extender de pai que tenha o constructor sobrescrito');
 				}
 
-				var filho = new Filho;
+				var filho = new Filho({ etnia: 'Afro canadense' });
+
 				is(filho.amoBeico(), 'e paçoca', "Sobrescrever o método e chamar dentro dele o método sobrescrito.");
 				is(filho.getPresunto(), 'toma um presunto', 'Executando método herdado.');
 				is(filho.getPaçoca(), 'ovu', "Polimorfismo.");
 				is(filho.getCarro(), 'Fusca', 'Filho gerando metodos automaticos do config');
 				is(filho.getAtributo(), 10, 'Usando os metodos gerados automaticamente no pai');
+				is(filho.getEtnia(), 'Afro canadense', 'Se as configurações são aplicadas quando são diferentes do default');
 
 				try {
 					Z.define('Neto', {
@@ -150,6 +160,9 @@
 				var neto = new Neto;
 				is(neto.amoBeico(), 'e paçoca', 'Terceiro nível de herança chamando o metodo avô com callParent');
 
+				/**
+				 * Testes de simblings
+				 */
 				try {
 					Z.define('Irmao', {
 						mixin: {

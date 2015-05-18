@@ -126,11 +126,8 @@ Z.declare = function(className){
 	var lastName = names.pop();
 
 	//	criando a classe
-	var classe = function Base(config, voidObject){
-		var me = this;
-		if (!voidObject) {
-			me.constructor(config);
-		}
+	var classe = function Base(config){
+		this.constructor(config);
 	};
 
 	//	colocando um metodo constructor na classe
@@ -277,7 +274,7 @@ Z.declare = function(className){
 				this.initConfig(config);
 			};
 
-			classe.prototype.mixin			= {};
+			classe.prototype.mixins			= {};
 			adicionarMetodo('constructor', constructBase);
 			adicionarMetodo('callParent', callParent);
 			adicionarMetodo('initConfig', initConfig);
@@ -299,9 +296,16 @@ Z.declare = function(className){
 
 			//	sobrescrevendo os metodos da extenção com os mixins
 			if (definitions.mixins) {
-				Z.each(definitions.mixins, function(mixinName, alias){
-					misturar(alias, mixinName);
-				});
+
+				if (definitions.mixins instanceof Array) {
+					Z.each(definitions.mixins, function(mixinName){
+						misturar(null, mixinName);
+					});
+				} else if (definitions.mixins.constructor === Object) {
+					Z.each(definitions.mixins, function(mixinName, alias){
+						misturar(alias, mixinName);
+					});
+				}
 			}
 
 			//	vinculando a classe os métodos e atributos estáticos
@@ -350,7 +354,7 @@ Z.declare = function(className){
 				throw "Argumento inválido para chamada de 'callParent', envie Array ou Arguments";
 			}
 
-			var owner	= new caller.owner({}, true);
+			var owner	= new caller.owner(null, true);
 			var parent	= owner.getParent();
 			var method	= parent[caller.identification];
 
@@ -428,7 +432,7 @@ Z.declare = function(className){
 						"isso fará com que todas as classes compartilhem da referência do mesmo.",
 						"Adicione o objeto manualmente sobrescrevendo o metodo constructor."
 					);
-			};
+			}
 
 			call.identification = identification;
 			call.owner = classe;
@@ -505,7 +509,7 @@ Z.declare = function(className){
 
 				if (!classePai.singleton) {
 					//	instância o pai
-					var pai		= new classePai({}, true);
+					var pai		= new classePai(null, true);
 
 					//	metodo estaticos do pai sendo replicados para o filho
 					var defPai	= classe.getDefinitions();
@@ -525,7 +529,7 @@ Z.declare = function(className){
 					}
 
 					//	joga o pai no prototipo da classe
-					classe.prototype = new classePai({}, true);
+					classe.prototype = new classePai(null, true);
 
 					//	sobreescrevendo método que são influênciados pela existência de uma extenção
 					adicionarMetodo('getParent', function(){ return pai; });
@@ -548,12 +552,16 @@ Z.declare = function(className){
 		var misturar = function(alias, nomeMix){
 			//	pega o mixin
 			var mixin	= Z.exists(nomeMix);
+			var mixinOco;
 
 			if (mixin && mixin.isZ) {
 				if (!mixin.singleton) {
-					mixin.apply(classe, [ {}, true ]);
-					mixinPuro = new mixin({}, true);
-					classe.prototype.mixin[alias] = mixinPuro;
+					mixin.apply(classe.prototype, [ null, true ]);
+					mixinOco = new mixin(null, true);
+
+					if (alias)
+						classe.prototype.mixins[alias] = mixinOco;
+
 				} else {
 					throw "Impossível fazer mixin com a classe {0}, a classe é singleton.".format(nomeMix);
 				}
@@ -633,11 +641,8 @@ Z.Loader = function(name, sync){
 		success: function(xhr){
 			var content = xhr.responseText;
 
-			// try {
-				eval(content);
-			// } catch (e) {
-			// 	throw "Impossível carregar sistema, a classe {0} contém erros".format(name);
-			// }
+			//	eval não deve ter try, por que o erro deve ser lançado mesmo
+			eval(content);
 		},
 
 		failure: function(xhr){

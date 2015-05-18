@@ -55,8 +55,14 @@
 					setErro("Não foi possível criar uma classe que sobrescreve o contructor e tem um config.");
 				}
 
-				is((new Teste1).valor, 10, "Construtor da classe deve ser executado na instância");
-				is((new Teste1({ atributo: 11 })).getAtributo(), 10, "Constructor sobrescrito não deve chamar initConfig");
+				try {
+					var t = new Teste1({ atributo: 11 });
+					is(t instanceof Teste1, true, "Se 't' é instância de 'Teste1'");
+					is(t.valor, 10, "Construtor da classe deve ser executado na instância");
+					is(t.getAtributo(), 10, "Constructor sobrescrito não deve chamar initConfig");					
+				} catch (e) {
+					setErro(e.stack);
+				}
 
 				err = 'Não pode declarar duas vezes a mesma classe';
 				try {
@@ -94,22 +100,26 @@
 					setErro("Não foi possível criar uma classe com metodos simples");
 				}
 
-				var pai = new(Pai);
-				is(pai.getAtributo(), 10, "callParent deve chamar o constructor do objeto base quando não se trata de uma extenção");
+				try {
+					var pai = new(Pai);
+					is(pai.getAtributo(), 10, "callParent deve chamar o constructor do objeto base quando não se trata de uma extenção");
 
-				pai.setAtributo(5);
-				is(pai.getAtributo(), 5, "Setar atributos.");
+					pai.setAtributo(5);
+					is(pai.getAtributo(), 5, "Setar atributos.");
 
-				pai.applyAtributo = function(v){
-					return String(v);
-				};
+					pai.applyAtributo = function(v){
+						return String(v);
+					};
 
-				pai.setAtributo(5);
-				is(pai.getAtributo(), '5', "Ajuste de dados por apply funcionando.");
+					pai.setAtributo(5);
+					is(pai.getAtributo(), '5', "Ajuste de dados por apply funcionando.");
 
-				var pai = new Pai({ fumiga: 'naum' });
-				is(pai.getFumiga(), 'naum', 'Sobrescrevendo os valores defaults do config');
-				is(pai.getAtributo(), 10, 'Sobrescrição de um atributo não anula de um outro nada haver');
+					var pai = new Pai({ fumiga: 'naum' });
+					is(pai.getFumiga(), 'naum', 'Sobrescrevendo os valores defaults do config');
+					is(pai.getAtributo(), 10, 'Sobrescrição de um atributo não anula de um outro nada haver');
+				} catch (e) {
+					setErro(e.stack);
+				}
 
 				/**
 				 * Testes com herança
@@ -136,14 +146,19 @@
 					setErro('Extender de pai que tenha o constructor sobrescrito');
 				}
 
-				var filho = new Filho({ etnia: 'Afro canadense' });
+				try {
+					var filho = new Filho({ etnia: 'Afro canadense' });
 
-				is(filho.amoBeico(), 'e paçoca', "Sobrescrever o método e chamar dentro dele o método sobrescrito.");
-				is(filho.getPresunto(), 'toma um presunto', 'Executando método herdado.');
-				is(filho.getPaçoca(), 'ovu', "Polimorfismo.");
-				is(filho.getCarro(), 'Fusca', 'Filho gerando metodos automaticos do config');
-				is(filho.getAtributo(), 10, 'Usando os metodos gerados automaticamente no pai');
-				is(filho.getEtnia(), 'Afro canadense', 'Se as configurações são aplicadas quando são diferentes do default');
+					is(filho instanceof Pai, true, 'Se filho é instância de Pai');
+					is(filho.amoBeico(), 'e paçoca', "Sobrescrever o método e chamar dentro dele o método sobrescrito.");
+					is(filho.getPresunto(), 'toma um presunto', 'Executando método herdado.');
+					is(filho.getPaçoca(), 'ovu', "Polimorfismo.");
+					is(filho.getCarro(), 'Fusca', 'Filho gerando metodos automaticos do config');
+					is(filho.getAtributo(), 10, 'Usando os metodos gerados automaticamente no pai');
+					is(filho.getEtnia(), 'Afro canadense', 'Se as configurações são aplicadas quando são diferentes do default');
+				} catch (e) {
+					setErro(e.stack);
+				}
 
 				try {
 					Z.define('Neto', {
@@ -157,15 +172,19 @@
 					setErro(e.stack);
 				}
 
-				var neto = new Neto;
-				is(neto.amoBeico(), 'e paçoca', 'Terceiro nível de herança chamando o metodo avô com callParent');
+				try {
+					var neto = new Neto;
+					is(neto.amoBeico(), 'e paçoca', 'Terceiro nível de herança chamando o metodo avô com callParent');
+				} catch (e) {
+					setErro(e.stack);
+				}
 
 				/**
 				 * Testes de simblings
 				 */
 				try {
 					Z.define('Irmao', {
-						mixin: {
+						mixins: {
 							'mano': 'Filho'
 						},
 
@@ -181,10 +200,14 @@
 					setErro('Criando classe com mixin');
 				}
 
-				var irmao = new Irmao();
-				is(irmao.getPresunto(), 'toma um presunto', 'Chamando método do irmão');
-				is(irmao.amoBeico(), 'e paçoca', 'Delegando para o metodo do mixin');
-				is(irmao.getPaçoca(), 'batata', 'Sobrescrevendo o método do mixin');
+				try {
+					var irmao = new Irmao();
+					is(irmao.getPresunto(), 'toma um presunto', 'Chamando método do irmão');
+					is(irmao.amoBeico(), 'e paçoca', 'Delegando para o metodo do mixin');
+					is(irmao.getPaçoca(), 'batata', 'Sobrescrevendo o método do mixin');
+				} catch (e) {
+					setErro(e.stack);
+				}
 			};
 		</script>
 

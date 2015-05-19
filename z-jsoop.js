@@ -1,5 +1,5 @@
 /**
- * Zazzi jSoop 1.0.2
+ * Zazzi jSoop 1.0.3
  * Zazzi JavaScript Oriented Object Programming
  *
  * Esta é uma bibliota que cria um ambiente javascript de orientação objeto
@@ -126,8 +126,9 @@ Z.declare = function(className){
 	var lastName = names.pop();
 
 	//	criando a classe
-	var classe = function Base(config){
-		this.constructor(config);
+	var classe = function Base(config, oco){
+		if (!oco)
+			this.constructor(config);
 	};
 
 	//	colocando um metodo constructor na classe
@@ -271,7 +272,7 @@ Z.declare = function(className){
 		 */
 		var setarPadroesDaClasse = function(){
 			var constructBase = function constructor(config){
-				this.initConfig(config);
+					this.initConfig(config);
 			};
 
 			classe.prototype.mixins			= {};
@@ -296,7 +297,6 @@ Z.declare = function(className){
 
 			//	sobrescrevendo os metodos da extenção com os mixins
 			if (definitions.mixins) {
-
 				if (definitions.mixins instanceof Array) {
 					Z.each(definitions.mixins, function(mixinName){
 						misturar(null, mixinName);
@@ -354,7 +354,7 @@ Z.declare = function(className){
 				throw "Argumento inválido para chamada de 'callParent', envie Array ou Arguments";
 			}
 
-			var owner	= new caller.owner(null, true);
+			var owner	= caller.owner.prototype;
 			var parent	= owner.getParent();
 			var method	= parent[caller.identification];
 
@@ -552,15 +552,21 @@ Z.declare = function(className){
 		var misturar = function(alias, nomeMix){
 			//	pega o mixin
 			var mixin	= Z.exists(nomeMix);
-			var mixinOco;
 
 			if (mixin && mixin.isZ) {
 				if (!mixin.singleton) {
-					mixin.apply(classe.prototype, [ null, true ]);
-					mixinOco = new mixin(null, true);
+					//	herdando os métodos estaticos do irmão
+					var defs = mixin.getDefinitions();
+					setarMetodosEstaticos(defs.statics);
+
+					// herdando os metodos do irmão
+					for (var key in mixin.prototype) {
+						if (classe.prototype[key] === undefined)
+							classe.prototype[key] = mixin.prototype[key];
+					}
 
 					if (alias)
-						classe.prototype.mixins[alias] = mixinOco;
+						classe.prototype.mixins[alias] = mixin.prototype;
 
 				} else {
 					throw "Impossível fazer mixin com a classe {0}, a classe é singleton.".format(nomeMix);
@@ -687,23 +693,24 @@ Z.Require = function(requires, call, sync){
  * a função each irá retornar o resultado
  */
 Z.each = function(arr, callback){
-	if (typeof arr.splice == 'function' && typeof arr.length == 'number') {
-		for (var i = 0; i < arr.length; i++) {
-			var isbreak = callback(arr[i], i);
-			if (isbreak !== undefined) {
-				return isbreak;
-			}
-		}
-	} else {
-		for (var key in arr) {
-			if (arr.hasOwnProperty(key)) {
-				var isbreak = callback(arr[key], key);
+	if (arr)
+		if (typeof arr.splice == 'function' && typeof arr.length == 'number') {
+			for (var i = 0; i < arr.length; i++) {
+				var isbreak = callback(arr[i], i);
 				if (isbreak !== undefined) {
 					return isbreak;
 				}
 			}
+		} else {
+			for (var key in arr) {
+				if (arr.hasOwnProperty(key)) {
+					var isbreak = callback(arr[key], key);
+					if (isbreak !== undefined) {
+						return isbreak;
+					}
+				}
+			}
 		}
-	}
 };
 
 /**

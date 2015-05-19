@@ -208,6 +208,71 @@
 				} catch (e) {
 					setErro(e.stack);
 				}
+
+				try {
+					Z.define('Mae', {
+						config: {
+							configuracao: 10,
+
+							batata: 'um poko'
+						},
+
+						verTelevisao: function(){
+							return "to indo";
+						},
+
+						applyConfiguracao: function(v){
+							return String(v);
+						},
+
+						amoBeico: function(){
+							return 'beiké ma deliça';
+						},
+					});
+
+					Z.define('meioIrmao', {
+						extend: 'Mae',
+
+						config: {
+							braco: 'direito',
+
+							perna: 'esquerda'
+						},
+
+						mixins: {
+							'manin': 'Irmao'
+						}
+					});
+				} catch (e) {
+					setErro(e.stack);
+				}
+
+				var meioirmao = Z.create('meioIrmao');
+				is(meioirmao.amoBeico(), 'beiké ma deliça', 'Herança com mixin, verificando seo método da herança é chamado.');
+				
+				/**
+				 * Testando metodos estaticos
+				 */
+				Z.define('Estatico', {
+					statics: {
+						banana: function(){
+							return 'banana';
+						},
+
+						terricota: 'pie'
+					},
+
+					propriedade: 20
+				});
+
+				var estc = new Estatico({ propriedadeNaoDeclarada: 30 });
+
+				is(Estatico.terricota, 'pie', 'Atributo estatico');
+				is(Estatico.banana(), 'banana', 'Método estatico');
+				is(estc.propriedade, 20, 'Propriedade');
+				is(estc.propriedadeNaoDeclarada, 30, 'Propriedade atribuida na instância');
+
+				window.scrollTo(0, document.documentElement.clientHeight);
 			};
 		</script>
 

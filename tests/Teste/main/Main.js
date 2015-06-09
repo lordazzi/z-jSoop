@@ -3,7 +3,7 @@ Z.define('Teste.main.Main', {
 		'cls2': 'Teste.main.Classe2'
 	},
 
-	propriedade: [],
+	propriedade: null,
 
 	config: {
 		porco: 10
@@ -11,6 +11,7 @@ Z.define('Teste.main.Main', {
 
 	constructor: function(){
 		this.callParent();
+		this.propriedade = [];
 	},
 
 	beicu: function(){

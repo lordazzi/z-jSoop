@@ -1,5 +1,5 @@
 /**
- * Zazzi jSoop 1.0.3
+ * Zazzi jSoop 1.0.4
  * Zazzi JavaScript Oriented Object Programming
  *
  * Esta é uma bibliota que cria um ambiente javascript de orientação objeto
@@ -44,6 +44,24 @@
  */
 var Z = function(){};
 
+
+(function(){
+	if (typeof process != 'undefined' && process.constructor instanceof Object) {
+		Z.global		= global;
+		Z.isBrowser		= false;
+		Z.isNode		= true;
+		Z.isDotNet		= false;
+		Z.isPhoneGap	= false;
+		module.exports	= Z;
+	} else if (typeof window != 'undefined' && window.navigator) {
+		Z.global		= window;
+		Z.isBrowser		= true;
+		Z.isNode		= false;
+		Z.isDotNet		= false;
+		Z.isPhoneGap	= false;
+	}
+})();
+
 /**
  * Cria um namespace, vinculando ele com um repositorio ou uma pasta
  */
@@ -62,7 +80,7 @@ Z.defineApp = function(obj){
 	if (Z.exists(obj.name))
 		throw "Uma variavel com o nome {0} já existe no escopo global.".format(obj.name);
 
-	window[obj.name] = {
+	Z.global[obj.name] = {
 		path: obj.path,
 		name: obj.name,
 		isZ: true
@@ -88,7 +106,7 @@ Z.defineApp = function(obj){
 Z.exists = function(className){
 	className	= String(className);
 	className	= className.split('.');
-	var scope	= window;
+	var scope	= Z.global;
 	for (var i = 0; i < className.length; i++) {
 		if (scope[className[i]])
 			scope = scope[className[i]];
@@ -113,7 +131,7 @@ Z.declare = function(className){
 	}
 	
 	var names	= className.split('.');
-	var scope	= window;
+	var scope	= Z.global;
 	var lastScope = {};
 	Z.each(names, function(name){
 		if (!scope[name])
@@ -427,15 +445,21 @@ Z.declare = function(className){
 		 */
 		var adicionarMetodo = function(identification, call){
 			if (call instanceof Object && call.constructor !== Function) {
+				var instancia = call.constructor.name;
+				instancia = instancia ? " (Instância de {0})".format(instancia) : '';
+
 				throw "{0}{1}{2}".format(
-						"Você não pode criar um propriedade que tenha um objeto por valor padrão,",
-						"isso fará com que todas as classes compartilhem da referência do mesmo.",
-						"Adicione o objeto manualmente sobrescrevendo o metodo constructor."
+						"Tentativa de criação de propriedade do tipo 'object'",
+						instancia,
+						", objeto não é aceito como valor padrão para propriedades."
 					);
 			}
 
-			call.identification = identification;
-			call.owner = classe;
+			if (call && call.constructor === Function) {
+				call.identification = identification;
+				call.owner = classe;
+			}
+
 			classe.prototype[identification] = call;
 		};
 
@@ -637,21 +661,19 @@ Z.Loader = function(name, sync){
 
 	var namespacePath = '';
 	if (namespace)
-		namespacePath = window[namespace].path || '';
+		namespacePath = Z.global[namespace].path || '';
 
 	path			= "{0}{1}".format(namespacePath, path);
 
-	Z.http({
-		url: path,
+	Z.io({
+		path: path,
 		sync: sync,
-		success: function(xhr){
-			var content = xhr.responseText;
-
+		success: function(result){
 			//	eval não deve ter try, por que o erro deve ser lançado mesmo
-			eval(content);
+			eval(result.content);
 		},
 
-		failure: function(xhr){
+		failure: function(){
 			throw "Impossível carregar sistema, não foi possível carregar a classe {0}".format(name);
 		}
 	});
@@ -788,48 +810,84 @@ Z.call = function(fn, args, scope){
 };
 
 /**
- * Efetua a operação de IO via http
+ * Efetua a operação de IO para inclusão de arquivos no sistema
  */
-Z.http = function(args){
-	if (args == undefined) { args = {}; }
-	if (args.url == undefined) { args.url = location; }
-	if (args.method == undefined) { args.method = 'get'; }
-	if (args.sync == undefined) { args.sync = false; }
+Z.io = function(args){
+	if (args			== undefined) { args = {}; }
+	if (args.path		== undefined) { args.path = location || ''; }
+	if (args.method		== undefined) { args.method = 'get'; }
+	if (args.sync		== undefined) { args.sync = false; }
 	
-	if (args.params == undefined) { args.params = {}; }
-	if (args.headers == undefined) { args.headers = {}; }
+	if (args.params		== undefined) { args.params = {}; }
+	if (args.headers	== undefined) { args.headers = {}; }
+	if (args.encode		== undefined) { args.encode = 'utf8'; }
 
-	if (args.success == undefined) { args.success = function(){}; }
-	if (args.failure == undefined) { args.failure = function(){}; }
-	if (args.callback == undefined) { args.callback = function(){}; }
+	if (args.success	== undefined) { args.success = function(){}; }
+	if (args.failure	== undefined) { args.failure = function(){}; }
+	if (args.callback	== undefined) { args.callback = function(){}; }
 
-	var xhr = new XMLHttpRequest();
+	if (Z.isBrowser) {
+		var xhr = new (
+				XMLHttpRequest || ActiveXObject('MSXML2.XMLHTTP.3.0')
+			);
 
-	Z.each(args.headers, function(value, header){
-		if (!header && !value) {
-			xhr.setRequestHeader(header, value);
-		}
-	});
-
-	xhr.onreadystatechange = function(){
-		if (xhr.readyState == 4) {
-			if (xhr.status == 200) {
-				args.success(xhr);
-			} else {
-				args.failure(xhr);
+		Z.each(args.headers, function(value, header){
+			if (!header && !value) {
+				xhr.setRequestHeader(header, value);
 			}
-			args.callback(xhr);
-		}
-	};
+		});
 
-	var data = new FormData;
-	Z.each(args.params, function(value, key){
-		data.append(key, value)
-	});
+		xhr.onreadystatechange = function(){
+			if (xhr.readyState == 4) {
+				var result = {
+					reader: xhr,
+					content: xhr.responseText
+				};
+				if (xhr.status == 200) {
+					result.success = true;
+					args.success(result);
+				} else {
+					result.success = false;
+					args.failure(result);
+				}
+				args.callback(result);
+			}
+		};
 
-	xhr.open(args.method.toUpperCase(), args.url, !args.sync);
-	xhr.send(data);
+		var data = new FormData;
+		Z.each(args.params, function(value, key){
+			data.append(key, value)
+		});
+
+		xhr.open(args.method.toUpperCase(), args.path, !args.sync);
+		xhr.send(data);
+	} else if (Z.isNode) {
+		var fs = require('fs');
+		var reader = args.sync ? fs.readFileSync : fs.readFile;
+		reader(args.path, args.encode, function (err, data) {
+			var result = { reader: reader };
+			if (err) {
+				result.success = false;
+				result.content = err;
+				args.failure(result);
+			} else {
+				result.success = true;
+				result.content = data;
+				args.success(result);
+			}
+			args.callback(result);
+		});
+	}
 };
+
+/**
+ * Se você precisar setar configurações padrão para todas as
+ * operações de IO feitas pela biblioteca Z, elas devem ser 
+ * definidas neste objeto
+ * 
+ * @type {Object}
+ */
+Z.io.defaults = {};
 
 /**
  * Facilitando o trabalho com strings

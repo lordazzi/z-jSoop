@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+
+		<title>Teste</title>
+		<script type="text/javascript" src="../z-jsoop.js"></script>
+		<script>
+			/**
+			 * Biblioteca de testes
+			 */
+			var is = function(mock, valorDesejado, mensagem){
+				if (mock === valorDesejado) {
+					setCorreto(mensagem);
+				} else {
+					setErro(mensagem);
+				}
+			};
+
+			(function(){
+				var i = 0;
+				window.message = function(mensagem, cls){
+					i++;
+					var div = document.createElement('div');
+					div.setAttribute("class", cls);
+					div.textContent = i+") "+mensagem;
+
+					var body = document.body;
+					body.appendChild(div);
+				};
+			})();
+
+			var setErro = function(mensagem){
+				message(mensagem, "nao-passou");
+			};
+
+			var setCorreto = function(mensagem){
+				message(mensagem, "passou");
+			};
+		</script>
+		<script src="unit-tests.js" type="text/javascript"></script>
+
+		<style>
+			body {
+				font-family: arial;	
+				margin: 0px;
+			}
+
+			.nao-passou, .passou {
+				margin: 5px;
+				padding: 5px;
+				border-radius: 3px;
+			}
+
+			.passou {
+				background-color: #A3FFA9;
+				color: #1B8F2B;
+				border: 1px solid #4C9E51;
+			}
+
+			.nao-passou {
+				background-color: #FFCFCF;
+				color: #A64444;
+				border: 1px solid #A64444;
+			}
+		</style>
+	</head>
+	<body>
+	</body>
+</html>

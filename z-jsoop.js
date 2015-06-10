@@ -1,5 +1,5 @@
 /**
- * Zazzi jSoop 1.1.1
+ * Zazzi jSoop 1.1.3
  * Zazzi JavaScript Oriented Object Programming
  *
  * Esta é uma bibliota que cria um ambiente javascript de orientação objeto
@@ -466,11 +466,14 @@ Z.declare = function(className){
 				var instancia = call.constructor.name;
 				instancia = instancia ? " (Instância de {0})".format(instancia) : '';
 
-				throw "{0}{1}{2}".format(
+				var erroMsg = "{0}{1}{2}{3}".format(
 						"Tentativa de criação de propriedade do tipo 'object'",
 						instancia,
-						", objeto não é aceito como valor padrão para propriedades."
+						", objeto não é aceito como valor padrão para propriedades.",
+						" {0}#{1}".format(name, identification)
 					);
+
+				throw erroMsg;
 			}
 
 			if (call && call.constructor === Function) {

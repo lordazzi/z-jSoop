@@ -1,4 +1,4 @@
-function runTestes() {
+function testes() {
 	var err;
 
 
@@ -258,8 +258,39 @@ function runTestes() {
 		window.scrollTo(0, document.documentElement.clientHeight);
 	}
 
+	try {
+		var teste = 'Declarar classe singleton';
+		Z.define('MeuSingleton', {
+			singleton: true,
+
+			config: {
+				batata: 'frita'
+			},
+
+			beico: 10,
+
+			metodo: function(){
+				return true;
+			}
+		});
+
+		setCorreto(teste);
+	} catch (e) {
+		setErro(teste);
+	}
+
+	is(MeuSingleton.beico, 10, 'Vinculo de uma propriedade com uma classe singleton');
+	is(MeuSingleton.metodo(), true, 'Vinculo de um método com uma classe singleton');
+	is(MeuSingleton.getBatata(), 'frita', 'Geração de método através de propriedades');
 }
 
+function runTestes() {
+	try {
+		testes();
+	} catch (e) {
+		setErro(e);
+	}
+}
 
 //	rodando os testes
 if (Z.isBrowser) {

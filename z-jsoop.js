@@ -1,5 +1,5 @@
 /**
- * Zazzi jSoop 1.0.4
+ * Zazzi jSoop 1.1.1
  * Zazzi JavaScript Oriented Object Programming
  *
  * Esta é uma bibliota que cria um ambiente javascript de orientação objeto
@@ -43,7 +43,6 @@
  * será um problema.
  */
 var Z = function(){};
-
 
 (function(){
 	if (typeof process != 'undefined' && process.constructor instanceof Object) {
@@ -145,8 +144,7 @@ Z.declare = function(className){
 
 	//	criando a classe
 	var classe = function Base(config, oco){
-		if (!oco)
-			this.constructor(config);
+		if (!oco) this.constructor(config);
 	};
 
 	//	colocando um metodo constructor na classe
@@ -290,7 +288,7 @@ Z.declare = function(className){
 		 */
 		var setarPadroesDaClasse = function(){
 			var constructBase = function constructor(config){
-					this.initConfig(config);
+				this.initConfig(config);
 			};
 
 			classe.prototype.mixins			= {};
@@ -298,6 +296,26 @@ Z.declare = function(className){
 			adicionarMetodo('callParent', callParent);
 			adicionarMetodo('initConfig', initConfig);
 			adicionarMetodo('getParent', function(){ return { constructor: constructBase }; });
+
+			if (definitions.singleton) {
+				classe.singleton = true;
+				classe.prototype.singleton = true;
+				classe.onLoad(function(){
+					var names	= name.split('.');
+					var scope	= Z.global;
+					var lastScope = {};
+					Z.each(names, function(name){
+						if (!scope[name])
+							scope[name] = {};
+
+						lastScope = scope;
+						scope = scope[name];
+					});
+
+					var lastName = names.pop();
+					lastScope[lastName] = new classe;
+				});
+			}
 
 			//	metodo estatico que permite que outras classes leiam as configurações base desta
 			classe.getDefinitions			= function(){ return definitions; };

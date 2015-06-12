@@ -1,5 +1,5 @@
 /**
- * Zazzi jSoop 1.1.3
+ * Zazzi jSoop 1.2.1
  * Zazzi JavaScript Oriented Object Programming
  *
  * Esta é uma bibliota que cria um ambiente javascript de orientação objeto
@@ -73,8 +73,11 @@ Z.defineApp = function(obj){
 	if (obj.path === undefined)
 		throw "Defina a pasta da aplicação em 'path'";
 
-	if (obj.path.match(/.+[^\/\\]$/))
+	if (typeof obj.path == 'string' && obj.path.match(/.+[^\/\\]$/))
 		obj.path += '/';
+
+	if (!(typeof obj.path == 'string' || typeof obj.path == 'function'))
+		throw "O argumento 'path' deve ser uma string ou uma função.";
 
 	if (Z.exists(obj.name))
 		throw "Uma variavel com o nome {0} já existe no escopo global.".format(obj.name);
@@ -128,19 +131,6 @@ Z.declare = function(className){
 		else
 			throw "Problema para declarar {0}, a variavel já existe.".format(className);
 	}
-	
-	var names	= className.split('.');
-	var scope	= Z.global;
-	var lastScope = {};
-	Z.each(names, function(name){
-		if (!scope[name])
-			scope[name] = {};
-
-		lastScope = scope;
-		scope = scope[name];
-	});
-
-	var lastName = names.pop();
 
 	//	criando a classe
 	var classe = function Base(config, oco){
@@ -173,7 +163,25 @@ Z.declare = function(className){
 	classe.todo = [];
 
 	//	declaro em escopo global
-	return lastScope[lastName] = classe;
+	return Z.declare.setObjectOn(className, classe);
+};
+
+Z.declare.setObjectOn = function(className, Anything) {
+	var names	= className.split('.');
+	var scope	= Z.global;
+	var lastScope = {};
+	Z.each(names, function(name){
+		if (!scope[name])
+			scope[name] = {};
+
+		lastScope = scope;
+		scope = scope[name];
+	});
+
+	var lastName = names.pop();
+	lastScope[lastName] = Anything;
+
+	return Anything;
 };
 
 /**
@@ -300,7 +308,8 @@ Z.declare = function(className){
 			if (definitions.singleton) {
 				classe.singleton = true;
 				classe.prototype.singleton = true;
-				classe.onLoad(function(){
+				var firstTodo = classe.todo[0];
+				classe.todo[0] = function(){
 					var names	= name.split('.');
 					var scope	= Z.global;
 					var lastScope = {};
@@ -314,7 +323,10 @@ Z.declare = function(className){
 
 					var lastName = names.pop();
 					lastScope[lastName] = new classe;
-				});
+				};
+
+				classe.onLoad(firstTodo);
+
 			}
 
 			//	metodo estatico que permite que outras classes leiam as configurações base desta
@@ -363,13 +375,7 @@ Z.declare = function(className){
 		 * na memória, o metodo abaixo os evoca.
 		 */
 		var chamarCallbacks = function(){
-			classe.onLoad = function(call){
-				Z.call(call, [ classe ]);
-			};
-
-			Z.each(classe.todo, function(call){
-				Z.call(call, [ classe ]);
-			});
+			Z.define.runClassCallbacks(classe);
 		};
 
 		/**
@@ -631,6 +637,21 @@ Z.declare = function(className){
 	Z.define = function(name, definitions){
 		return new Classe(name, definitions);
 	};
+
+	/**
+	 * Antes da classe carregar, pode ser que tenha sido definido nela
+	 * callbacks de coisas a serem executadas quando ela for alocada
+	 * na memória, o metodo abaixo os evoca.
+	 */
+	Z.define.runClassCallbacks = function(classe){
+		classe.onLoad = function(call){
+			Z.call(call, [ classe ]);
+		};
+
+		Z.each(classe.todo, function(call){
+			Z.call(call, [ classe ]);
+		});
+	};
 })();
 
 /**
@@ -665,8 +686,6 @@ Z.Loader = function(name, sync){
 
 	//	verificando se a classe já está carregada
 	var classe = Z.exists(name);
-	if (classe && classe.isZ && !classe.empty)
-		return;
 
 	var arr			= name.split('.');
 	var className	= arr.pop();
@@ -675,29 +694,41 @@ Z.Loader = function(name, sync){
 	if (arr.length)
 		namespace	= arr.shift();
 
-	var path		= arr.join('/');
-	if (path) 
-		path		= "{0}/".format(path);
-	path			= "{0}{1}.js".format(path, className);
+	//	carrega usando função
+	if (namespace && Z.global[namespace].path.constructor === Function) {
+		Z.global[namespace].path(name, function(code){
+			var classe = Z.declare(name);
+			Z.define.runClassCallbacks(classe);
+			Z.declare.setObjectOn(name, code);
+		});
 
-	var namespacePath = '';
-	if (namespace)
-		namespacePath = Z.global[namespace].path || '';
+	//	carrega usando path por string
+	} else if (!(classe && classe.isZ && !classe.empty)) {
+		var path		= arr.join('/');
+		if (path) 
+			path		= "{0}/".format(path);
+		path			= "{0}{1}.js".format(path, className);
 
-	path			= "{0}{1}".format(namespacePath, path);
+		var namespacePath = '';
+		if (namespace)
+			namespacePath = Z.global[namespace].path || '';
 
-	Z.io({
-		path: path,
-		sync: sync,
-		success: function(result){
-			//	eval não deve ter try, por que o erro deve ser lançado mesmo
-			eval(result.content);
-		},
+		path			= "{0}{1}".format(namespacePath, path);
 
-		failure: function(){
-			throw "Impossível carregar sistema, não foi possível carregar a classe {0}".format(name);
-		}
-	});
+		Z.io({
+			path: path,
+			sync: sync,
+			success: function(result){
+				//	eval não deve ter try, por que o erro deve ser lançado mesmo
+				eval(result.content);
+			},
+
+			failure: function(){
+				throw "Impossível carregar sistema, não foi possível carregar a classe {0}".format(name);
+			}
+		});
+	}
+
 };
 
 /**

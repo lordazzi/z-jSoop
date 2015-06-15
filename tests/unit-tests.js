@@ -254,10 +254,6 @@ function testes() {
 		setErro(teste);
 	}
 
-	if (Z.isBrowser) {
-		window.scrollTo(0, document.documentElement.clientHeight);
-	}
-
 	try {
 		var teste = 'Declarar classe singleton';
 		Z.define('MeuSingleton', {
@@ -282,6 +278,115 @@ function testes() {
 	is(MeuSingleton.beico, 10, 'Vinculo de uma propriedade com uma classe singleton');
 	is(MeuSingleton.metodo(), true, 'Vinculo de um método com uma classe singleton');
 	is(MeuSingleton.getBatata(), 'frita', 'Geração de método através de propriedades');
+
+	Z.define('MixMe', {
+		config: {
+			mixConfig: 10
+		},
+
+		statics: {
+			mixPropriedade: 8
+		},
+
+		mixMetodo: function(){
+			return true;
+		}
+	});
+
+	Z.define('OutroMix', {
+		config: {
+			sim: true
+		}
+	});
+
+	Z.define('Beicosamente', {
+
+		config: {
+			oi: 10
+		},
+
+		statics: {
+			beico: 'sim'
+		}
+	});
+
+	Z.define('Porco', {
+
+		statics: {
+			vinagre: 'oi'
+		}
+	});
+
+	//
+	Z.define('ClasseTataravo', {
+		mixins: [
+			'Porco'
+		],
+
+		tataraMetodo: function(){
+			return true;
+		}
+	});
+
+	Z.define('ClasseBisavo', {
+		extend: 'ClasseTataravo',
+
+		mixins: {
+			'mixme': 'MixMe'
+		},
+
+		bisaMetodo: function(){
+			return true;
+		}
+	});
+
+	Z.define('ClasseAvo', {
+		extend: 'ClasseBisavo',
+
+		mixins: [
+			'Beicosamente'
+		],
+
+		avoMetodo: function(){
+			return true;
+		}
+	});
+
+	Z.define('ClassePai', {
+		extend: 'ClasseAvo',
+
+		mixins: {
+			'outro': 'OutroMix'
+		},
+
+		paiMetodo: function(){
+			return true;
+		}
+	});
+
+	Z.define('ClasseFilho', {
+		extend: 'ClassePai',
+
+		filhoMetodo: function(){
+			return true;
+		}
+	});
+
+	var filho = Z.create('ClasseFilho');
+	is(filho.mixins.mixme, MixMe.prototype, "Herança de mixins de classes de hierarquias muito distantes");
+	is(filho.mixins.outro, OutroMix.prototype, "Herança de mixins de classes de hierarquias muito distantes");
+	is(filho.getMixConfig(), 10, "Herança de método de mixin de classe de herança distante");
+	is(filho.getSim(), true, "Herança de método de mixin de classe de herança distante");
+	is(ClasseFilho.mixPropriedade, 8, "Herança de propriedades estáticas de mixins aplicados a classes pai");
+
+	is(ClasseAvo.beico, 'sim', "Atributo estático em objeto que recebeu diretamente um mixin definido em array");
+	is(ClasseFilho.beico, 'sim', "Herança de uma classe que tenha a propriedade estática de mixin definido em array");
+	is(Z.create('ClasseFilho').getOi(), 10, "Herança de configs de mixin vinculado ao pai usando array");
+	is(ClasseFilho.vinagre, 'oi', "Se os mixins das classes filhas declaradas por array não sobrescrevem as classes mixins herdadas");
+
+	if (Z.isBrowser) {
+		window.scrollTo(0, document.documentElement.clientHeight + 1000);
+	}
 }
 
 function runTestes() {

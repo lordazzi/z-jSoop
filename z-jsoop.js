@@ -1,5 +1,5 @@
 /**
- * Zazzi jSoop 1.2.2
+ * Zazzi jSoop 1.2.4
  * Zazzi JavaScript Oriented Object Programming
  *
  * Esta é uma bibliota que cria um ambiente javascript de orientação objeto
@@ -275,14 +275,14 @@ Z.declare.setObjectOn = function(className, Anything) {
 					throw deveSerUmObjeto.format('config');
 
 				if (definitions.hasOwnProperty('mixins')) {
-					if (!definitions.mixins instanceof Object)
+					if (!(definitions.mixins.constructor ===  Object || definitions.mixins.constructor ===  Array))
 						throw deveSerUmObjeto.format('mixins');
 						
 					Z.each(definitions.mixins, function(value, key){
 						if (typeof value != 'string')
 							throw deveSerUmObjeto.format('mixins');
 			
-						if (typeof key != 'string')
+						if (!(typeof key == 'string' || typeof key == 'number'))
 							throw deveSerUmObjeto.format('mixins');
 					});
 				}
@@ -339,21 +339,22 @@ Z.declare.setObjectOn = function(className, Anything) {
 		 * foram chamadas
 		 */
 		var implementarDefinicoes = function(){
-			//	primeiro fazer a extenção, se houver uma
+			//	primeiro a extenção, uma vez que ela sobrescreve o prototipo do objeto
 			if (definitions.extend)
 				estender();
 
-			//	sobrescrevendo os metodos da extenção com os mixins
+			//	depois dos mixins, que são menos importantes do que o objeto pai,
+			//	mas não podem ser colocados antes por que se não serão sobrescritos
 			if (definitions.mixins) {
-				if (definitions.mixins instanceof Array) {
-					Z.each(definitions.mixins, function(mixinName){
-						misturar(null, mixinName);
-					});
-				} else if (definitions.mixins.constructor === Object) {
-					Z.each(definitions.mixins, function(mixinName, alias){
-						misturar(alias, mixinName);
-					});
-				}
+				Z.each(definitions.mixins, function(mixinName, alias){
+					if (typeof alias == 'number') {
+						while (classe.prototype.mixins[alias] !== undefined) {
+							alias++
+						}
+					}
+
+					misturar(alias, mixinName);
+				});
 			}
 
 			//	vinculando a classe os métodos e atributos estáticos
@@ -459,6 +460,19 @@ Z.declare.setObjectOn = function(className, Anything) {
 		var setarMetodosEstaticos = function(){
 			Z.each(definitions.statics, function(value, attr){
 				classe[attr] = value;
+			});
+		};
+
+		/**
+		 * Aplica o conteúdo passado por parâmetro como atributos
+		 * estáticos de origem de mixin, isto é, ele dará maior
+		 * valor aos atributos já contidos na classe do que aos
+		 * atributos passados aqui
+		 */
+		var setarMetodosEstaticosDeMixins = function(statics){
+			Z.each(statics, function(value, attr){
+				if (!classe.hasOwnProperty(attr))
+					classe[attr] = value;
 			});
 		};
 
@@ -579,6 +593,16 @@ Z.declare.setObjectOn = function(className, Anything) {
 						definitions.statics = stc;
 					}
 
+					//	repassando para o filho os mixins que estão vinculados ao objeto por alias
+					var aditionalAlias = classePai.prototype.mixins;
+					Z.each(aditionalAlias, function(prototipo, alias){
+						var defs = prototipo.origin.getDefinitions();
+						setarMetodosEstaticosDeMixins(defs.statics);
+						
+						if (!classe.prototype.mixins[alias])
+							classe.prototype.mixins[alias] = prototipo;
+					});
+
 					//	joga o pai no prototipo da classe
 					classe.prototype = new classePai(null, true);
 
@@ -607,8 +631,12 @@ Z.declare.setObjectOn = function(className, Anything) {
 			if (mixin && mixin.isZ) {
 				if (!mixin.singleton) {
 					//	herdando os métodos estaticos do irmão
-					var defs = mixin.getDefinitions();
-					setarMetodosEstaticos(defs.statics);
+					var mixDefs = mixin.getDefinitions();
+
+					//	precisa ser um método a parte para que ele não
+					//	sobrescreva os valores estáticos da classe
+					//	ou do pai da classe
+					setarMetodosEstaticosDeMixins(mixDefs.statics);
 
 					// herdando os metodos do irmão
 					for (var key in mixin.prototype) {
@@ -616,9 +644,7 @@ Z.declare.setObjectOn = function(className, Anything) {
 							classe.prototype[key] = mixin.prototype[key];
 					}
 
-					if (alias)
-						classe.prototype.mixins[alias] = mixin.prototype;
-
+					classe.prototype.mixins[alias] = mixin.prototype;
 				} else {
 					throw "Impossível fazer mixin com a classe {0}, a classe é singleton.".format(nomeMix);
 				}

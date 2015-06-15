@@ -1,5 +1,5 @@
 /**
- * Zazzi jSoop 1.2.1
+ * Zazzi jSoop 1.2.2
  * Zazzi JavaScript Oriented Object Programming
  *
  * Esta é uma bibliota que cria um ambiente javascript de orientação objeto
@@ -820,6 +820,8 @@ Z.clone = function(json){
 				novoJson[key] = Z.clone(key);
 			}
 		}
+
+		return json;
 	}
 
 	// se não for objeto, como um string, number, boolean

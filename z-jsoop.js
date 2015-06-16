@@ -1,5 +1,5 @@
 /**
- * Zazzi jSoop 1.2.5
+ * Zazzi jSoop 1.2.6
  * Zazzi JavaScript Oriented Object Programming
  *
  * Esta é uma bibliota que cria um ambiente javascript de orientação objeto
@@ -468,7 +468,7 @@ Z.declare.setObjectOn = function(className, Anything) {
 		 * valor aos atributos já contidos na classe do que aos
 		 * atributos passados aqui
 		 */
-		var setarMetodosEstaticosDeMixins = function(statics){
+		var setarValoresEstaticosDeExternos = function(statics){
 			Z.each(statics, function(value, attr){
 				if (!classe.hasOwnProperty(attr))
 					classe[attr] = value;
@@ -576,7 +576,7 @@ Z.declare.setObjectOn = function(className, Anything) {
 					var pai		= new classePai(null, true);
 
 					//	metodo estaticos do pai sendo replicados para o filho
-					var defPai	= classe.getDefinitions();
+					var defPai	= classePai.getDefinitions();
 					if (defPai.statics) {
 						//	primeiro crio um objeto vazio
 						var stc = {};
@@ -628,7 +628,7 @@ Z.declare.setObjectOn = function(className, Anything) {
 					//	precisa ser um método a parte para que ele não
 					//	sobrescreva os valores estáticos da classe
 					//	ou do pai da classe
-					setarMetodosEstaticosDeMixins(mixDefs.statics);
+					setarValoresEstaticosDeExternos(mixDefs.statics);
 
 					// herdando os metodos do irmão
 					for (var key in mixin.prototype) {
@@ -652,7 +652,7 @@ Z.declare.setObjectOn = function(className, Anything) {
 		var adicionarVinculoComMixins = function(aditionalAlias){
 			Z.each(aditionalAlias, function(prototipo, alias){
 				var defs = prototipo.origin.getDefinitions();
-				setarMetodosEstaticosDeMixins(defs.statics);
+				setarValoresEstaticosDeExternos(defs.statics);
 				
 				if (!classe.prototype.mixins[alias])
 					classe.prototype.mixins[alias] = prototipo;

@@ -247,7 +247,10 @@ function testes() {
 		Z.defineApp({
 			name: 'Teste',
 			path: 'Teste',
-			main: 'Teste.main.Main'
+			main: 'Teste.main.Main',
+			onLauch: function(){
+				setCorreto('Executando onLauch');
+			}
 		});
 		setCorreto(teste);
 	} catch (e) {
@@ -385,6 +388,21 @@ function testes() {
 	is(ClasseFilho.vinagre, 'oi', "Se os mixins das classes filhas declaradas por array não sobrescrevem as classes mixins herdadas");
 
 	Z.define('Vermelho', {
+		statics: {
+			estatico: 10,
+
+			coloracao: 'avermelhado',
+
+			propriedade: true,
+
+			verde: null
+		},
+
+		constructor: function(){
+			var me = this;
+			is(me.origin.propriedade, false, 'Quando mixin se acessa, o valor de suas propriedades estáticas devem ser os valores da classe que o extendeu');
+		},
+
 		config: {
 			r: 0,
 
@@ -397,17 +415,55 @@ function testes() {
 	Z.define('Tomate', {
 		mixins: {
 			'cor': 'Vermelho'
+		},
+
+		statics: {
+			estatico: 11,
+
+			verde: 'um pouco',
+
+			estrategia: 'legal'
 		}
 	});
 
 	Z.define('Pizza', {
+		statics: {
+			propriedade: false,
+
+			verde: 'nem sempre'
+		},
+
 		mixins: {
 			'tomate': 'Tomate'
+		},
+
+		constructor: function(){
+			var me = this;
+			me.mixins.cor.constructor.apply(me, arguments);
 		}
 	});
 
 	var pizza = new Pizza;
 	is(pizza.mixins.cor, Vermelho.prototype, 'Se há herança de mixins que pertencem a outros mixins');
+	is(Pizza.coloracao, 'avermelhado', 'Herdando propriedade estática de mixin do mixin');
+	is(Pizza.estrategia, 'legal', 'Herdando propriedade estática do mixin');
+	is(Tomate.estatico, 11, 'Sobrescrevendo propriedade estática do mixin do mixin');
+	is(Pizza.estatico, 11, 'Mixin sobrescrevendo valor da propriedade estatica de seu mixin');
+	is(Pizza.verde, 'nem sempre', 'Classe sobrescrevendo valor da propriedade estatica que o mixin herdou do mixin');
+
+
+	Z.define('MolhoDeTomate', {
+		extend: 'Tomate',
+
+		statics: {
+			estatico: 12
+		}
+	});
+
+	is(MolhoDeTomate.estatico, 12, 'Classe sobrescrevendo as propriedades estáticas do pai');
+	is(MolhoDeTomate.verde, 'um pouco', 'Classe lendo as propriedades estáticas que o pai sobrescreveu do mixin');
+	is(MolhoDeTomate.estrategia, 'legal', 'Classe lendo as propriedades que são unicamente do pai');
+	is(Pizza.coloracao, 'avermelhado', 'Classe lendo as propriedades estáticas do mixin do pai');
 
 	if (Z.isBrowser) {
 		window.scrollTo(0, document.documentElement.clientHeight + 1000);

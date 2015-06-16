@@ -384,6 +384,31 @@ function testes() {
 	is(Z.create('ClasseFilho').getOi(), 10, "Herança de configs de mixin vinculado ao pai usando array");
 	is(ClasseFilho.vinagre, 'oi', "Se os mixins das classes filhas declaradas por array não sobrescrevem as classes mixins herdadas");
 
+	Z.define('Vermelho', {
+		config: {
+			r: 0,
+
+			g: 0,
+
+			b: 0
+		}
+	});
+
+	Z.define('Tomate', {
+		mixins: {
+			'cor': 'Vermelho'
+		}
+	});
+
+	Z.define('Pizza', {
+		mixins: {
+			'tomate': 'Tomate'
+		}
+	});
+
+	var pizza = new Pizza;
+	is(pizza.mixins.cor, Vermelho.prototype, 'Se há herança de mixins que pertencem a outros mixins');
+
 	if (Z.isBrowser) {
 		window.scrollTo(0, document.documentElement.clientHeight + 1000);
 	}

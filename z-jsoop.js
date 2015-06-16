@@ -1,5 +1,5 @@
 /**
- * Zazzi jSoop 1.2.4
+ * Zazzi jSoop 1.2.5
  * Zazzi JavaScript Oriented Object Programming
  *
  * Esta é uma bibliota que cria um ambiente javascript de orientação objeto
@@ -326,7 +326,6 @@ Z.declare.setObjectOn = function(className, Anything) {
 				};
 
 				classe.onLoad(firstTodo);
-
 			}
 
 			//	metodo estatico que permite que outras classes leiam as configurações base desta
@@ -349,7 +348,7 @@ Z.declare.setObjectOn = function(className, Anything) {
 				Z.each(definitions.mixins, function(mixinName, alias){
 					if (typeof alias == 'number') {
 						while (classe.prototype.mixins[alias] !== undefined) {
-							alias++
+							alias++;
 						}
 					}
 
@@ -594,14 +593,7 @@ Z.declare.setObjectOn = function(className, Anything) {
 					}
 
 					//	repassando para o filho os mixins que estão vinculados ao objeto por alias
-					var aditionalAlias = classePai.prototype.mixins;
-					Z.each(aditionalAlias, function(prototipo, alias){
-						var defs = prototipo.origin.getDefinitions();
-						setarMetodosEstaticosDeMixins(defs.statics);
-						
-						if (!classe.prototype.mixins[alias])
-							classe.prototype.mixins[alias] = prototipo;
-					});
+					adicionarVinculoComMixins(classePai.prototype.mixins);
 
 					//	joga o pai no prototipo da classe
 					classe.prototype = new classePai(null, true);
@@ -645,12 +637,26 @@ Z.declare.setObjectOn = function(className, Anything) {
 					}
 
 					classe.prototype.mixins[alias] = mixin.prototype;
+
+					//	herdando os mixins dos mixins
+					adicionarVinculoComMixins(mixin.prototype.mixins);
+
 				} else {
 					throw "Impossível fazer mixin com a classe {0}, a classe é singleton.".format(nomeMix);
 				}
 			} else {
 				throw "Impossível fazer mixin com a classe {0}, a classe não foi declarada ou não é uma classe reconhecida".format(nomeMix);
 			}
+		};
+
+		var adicionarVinculoComMixins = function(aditionalAlias){
+			Z.each(aditionalAlias, function(prototipo, alias){
+				var defs = prototipo.origin.getDefinitions();
+				setarMetodosEstaticosDeMixins(defs.statics);
+				
+				if (!classe.prototype.mixins[alias])
+					classe.prototype.mixins[alias] = prototipo;
+			});
 		};
 
 		return constructor();

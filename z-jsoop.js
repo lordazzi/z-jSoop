@@ -1,5 +1,5 @@
 /**
- * Zazzi jSoop 1.2.7
+ * Zazzi jSoop 1.2.8
  * Zazzi JavaScript Oriented Object Programming
  *
  * Esta é uma bibliota que cria um ambiente javascript de orientação objeto
@@ -752,12 +752,6 @@ Z.Loader = function(name, sync){
 			sync: sync,
 			success: function(result){
 				//	eval não deve ter try, por que o erro deve ser lançado mesmo
-				var reg = new RegExp("\\.define\\([\"']"+name+"[\"']\\)");
-
-				if (!reg.test(result.content)) {
-					console.warn('Impossível carregar "{0}". Verifique se o arquivo tem de fato a definição da classe solicitada.'.format(name));
-				}
-
 				eval(result.content);
 			},
 
@@ -765,8 +759,6 @@ Z.Loader = function(name, sync){
 				throw "Impossível carregar sistema, não foi possível carregar a classe {0}".format(name);
 			}
 		});
-	} else if (Z.global[namespace] && Z.global[namespace].path) {
-		console.warn("Classe {0} não definida, o namespace definido no arquivo está incorreto.".format(name));
 	}
 
 };

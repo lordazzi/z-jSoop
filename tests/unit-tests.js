@@ -463,7 +463,7 @@ function testes() {
 	is(MolhoDeTomate.estatico, 12, 'Classe sobrescrevendo as propriedades estáticas do pai');
 	is(MolhoDeTomate.verde, 'um pouco', 'Classe lendo as propriedades estáticas que o pai sobrescreveu do mixin');
 	is(MolhoDeTomate.estrategia, 'legal', 'Classe lendo as propriedades que são unicamente do pai');
-	is(Pizza.coloracao, 'avermelhado', 'Classe lendo as propriedades estáticas do mixin do pai');
+	is(MolhoDeTomate.coloracao, 'avermelhado', 'Classe lendo as propriedades estáticas do mixin do pai');
 
 	if (Z.isBrowser) {
 		window.scrollTo(0, document.documentElement.clientHeight + 1000);

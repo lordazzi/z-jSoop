@@ -1,0 +1,32 @@
+{
+  "name": "z-jsoop",
+  "version": "1.0.0",
+  "description": "OOP structure for JavaScript like Ext Js lib",
+  "main": "z-jsdoop.min.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lordazzi/z-jSoop.git"
+  },
+  "keywords": [
+    "azzi",
+    "jsoop",
+    "object-oriented",
+    "javascript",
+    "sencha",
+    "ext",
+    "ext-js",
+    "z-jsoop"
+  ],
+  "author": "Ricardo Azzi Silva",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lordazzi/z-jSoop/issues"
+  },
+  "homepage": "https://github.com/lordazzi/z-jSoop#readme"
+}
